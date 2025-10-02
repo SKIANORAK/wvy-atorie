@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Telegram Bot Control</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            background: #000; 
+            color: white;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .online { background: #2ecc71; }
+        .offline { background: #e74c3c; }
+        button { 
+            background: #7289da; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .log { 
+            background: #1a1a1a; 
+            padding: 15px; 
+            border-radius: 5px; 
+            height: 200px; 
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Управление Telegram Ботом</h1>
+        
+        <div id="status" class="status offline">
+            🔴 Бот оффлайн
+        </div>
+
+        <button onclick="sendTestMessage()">📨 Тест отправки заказа</button>
+        <button onclick="checkBotStatus()">🔄 Проверить статус бота</button>
+
+        <div class="log" id="log">
+            <!-- Логи будут здесь -->
+        </div>
+    </div>
+
+    <script>
+        const BOT_TOKEN = '7969220641:AAGCTj-G2kGav5g4QqR2yx2fV6KUpSByKWQ';
+        const CHAT_ID = '2038132122';
+
+        function addLog(message) {
+            const log = document.getElementById('log');
+            log.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Проверка статуса бота
+        async function checkBotStatus() {
+            try {
+                addLog('🔍 Проверяем статус бота...');
+                
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMe`);
+                const data = await response.json();
+                
+                if (data.ok) {
+                    document.getElementById('status').className = 'status online';
+                    document.getElementById('status').innerHTML = `🟢 Бот онлайн: ${data.result.first_name}`;
+                    addLog('✅ Бот работает корректно');
+                } else {
+                    throw new Error(data.description);
+                }
+            } catch (error) {
+                addLog(`❌ Ошибка: ${error.message}`);
+            }
+        }
+
+        // Отправка тестового заказа
+        async function sendTestMessage() {
+            try {
+                addLog('📤 Отправляем тестовый заказ...');
+
+                const orderData = {
+                    items: [
+                        { name: "BasedGod Hoodie", price: 3500, quantity: 1, size: "M" },
+                        { name: "White T-Shirt", price: 1500, quantity: 2, size: "L" }
+                    ],
+                    total: 6500,
+                    contact: "@test_user"
+                };
+
+                const message = `🛒 ТЕСТОВЫЙ ЗАКАЗ\n\n` +
+                    `Товары:\n` +
+                    `• ${orderData.items[0].name} - ${orderData.items[0].quantity}шт. - ${orderData.items[0].price * orderData.items[0].quantity}₽\n` +
+                    `• ${orderData.items[1].name} - ${orderData.items[1].quantity}шт. - ${orderData.items[1].price * orderData.items[1].quantity}₽\n\n` +
+                    `Итого: ${orderData.total}₽\n` +
+                    `Контакт: ${orderData.contact}`;
+
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    addLog('✅ Тестовый заказ отправлен!');
+                } else {
+                    addLog(`❌ Ошибка отправки: ${result.description}`);
+                }
+
+            } catch (error) {
+                addLog(`❌ Ошибка: ${error.message}`);
+            }
+        }
+
+        // Автопроверка при загрузке
+        checkBotStatus();
+        addLog('🚀 Панель управления запущена');
+    </script>
+</body>
+</html>
